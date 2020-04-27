@@ -1,11 +1,10 @@
 //! A handful cli to convert simple html table to markdown table.
 use anyhow;
-use scraper::{ElementRef, Html, Selector};
-use std::collections::HashMap;
+use scraper::{ElementRef, Html};
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::{BufReader, BufWriter};
+use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
@@ -139,8 +138,6 @@ fn parse_table(table_element: &ElementRef) -> Table {
             .collect::<Vec<_>>();
         table.add_row(values);
     }
-
-    println!("{}", table.to_markdown());
 
     table
 }
