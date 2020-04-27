@@ -34,8 +34,4 @@ $ cargo run -- example/html/test.html
 |--- | --- | --- | --- | --- | ---|
 |HashMap | O(1)~ | O(1)~* | O(1)~ | N/A | N/A|
 |BTreeMap | O(log n) | O(log n) | O(log n) | O(log n) | O(n+m)|
-| | get | insert | remove | predecessor | append|
-|--- | --- | --- | --- | --- | ---|
-|HashMap | O(1)~ | O(1)~* | O(1)~ | N/A | N/A|
-|BTreeMap | O(log n) | O(log n) | O(log n) | O(log n) | O(n+m)|
 ```
