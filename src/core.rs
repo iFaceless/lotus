@@ -1,69 +1,30 @@
-//! A handful cli to convert simple html table to markdown table.
+//! Core implementation for html table converter.
 use anyhow;
 use scraper::{ElementRef, Html};
-use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::{BufReader};
-use std::path::{Path, PathBuf};
-use structopt::StructOpt;
+use std::io::BufReader;
+use std::path::Path;
 
-/// Macro sel! parses css selector expression
+/// Macro sel! parses css selector expression.
 macro_rules! sel {
     ($x: expr) => {
         scraper::Selector::parse($x).unwrap()
     };
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = env!("CARGO_PKG_NAME"))]
-#[structopt(version = env!("CARGO_PKG_VERSION"))]
-#[structopt(author = env!("CARGO_PKG_AUTHORS"))]
-#[structopt(about = env!("CARGO_PKG_DESCRIPTION"))]
-struct Opt {
-    /// input html file with tables
-    #[structopt(value_name = "INPUT", parse(from_os_str))]
-    input: PathBuf,
-    /// output file to save markdown table
-    #[structopt(long, short, value_name = "OUTPUT", parse(from_os_str))]
-    output: Option<PathBuf>,
-    /// open output file automatically
-    #[structopt(long)]
-    open_after_converted: bool,
-    /// text editor command
-    #[structopt(long)]
-    text_editor: Option<String>,
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let opt = Opt::from_args();
-    let out = html_table_to_markdown_table(opt.input)?
-        .iter()
-        .map(|t| t.to_markdown())
-        .collect::<Vec<String>>()
-        .join("\n");
-
-    match opt.output {
-        Some(pth) => {
-            File::create(pth)?.write_all(out.as_bytes())?;
-        }
-        None => {
-            println!("{}", out);
-        }
-    }
-
-    Ok(())
-}
-
+/// A table row contains multiple columns.
 type Row = Vec<String>;
 
+/// Table represents a table, wraps headers and rows.
 #[derive(Debug)]
-struct Table {
+pub struct Table {
     rows: Vec<Row>,
     headers: Vec<String>,
 }
 
 impl Table {
+    /// Create a new table object.
     fn new() -> Self {
         Table {
             rows: Vec::new(),
@@ -71,15 +32,18 @@ impl Table {
         }
     }
 
-    fn add_row(&mut self, row: Vec<String>) {
+    /// Add a row to table.
+    fn add_row(&mut self, row: Row) {
         self.rows.push(row);
     }
 
-    fn add_header(&mut self, row: String) {
-        self.headers.push(row);
+    /// Add a header to table.
+    fn add_header(&mut self, hdr: String) {
+        self.headers.push(hdr);
     }
 
-    fn to_markdown(&self) -> String {
+    /// Render table object as markdown table.
+    pub fn to_markdown(&self) -> String {
         let mut lines = Vec::new();
         // add header
         lines.push(format!("|{}|", self.headers.join(" | ")));
@@ -96,13 +60,12 @@ impl Table {
         for row in self.rows.iter() {
             lines.push(format!("|{}|", row.join(" | ")));
         }
-
         lines.join("\n")
     }
 }
 
 /// Convert html table to markdown table.
-fn html_table_to_markdown_table<P: AsRef<Path>>(src: P) -> anyhow::Result<Vec<Table>> {
+pub fn html_table_to_markdown_table<P: AsRef<Path>>(src: P) -> anyhow::Result<Vec<Table>> {
     let mut rdr = BufReader::new(File::open(src)?);
     let mut content = String::new();
     rdr.read_to_string(&mut content)?;
@@ -119,6 +82,8 @@ fn html_table_to_markdown_table<P: AsRef<Path>>(src: P) -> anyhow::Result<Vec<Ta
     Ok(tables)
 }
 
+/// Parse a table element, collect headers and rows,
+/// return an [`Table`] object.
 fn parse_table(table_element: &ElementRef) -> Table {
     let mut table = Table::new();
 
